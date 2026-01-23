@@ -1,0 +1,31 @@
+﻿@model List<Horse_Rcale.Models.Horse>
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Киберскачки</title>
+    <link rel="stylesheet" href="~/css/race.css" />
+</head>
+<body>
+
+    <h2>Киберскачки — Демонстрация</h2>
+
+    <div class="track">
+        @foreach (var horse in Model)
+        {
+            <div class="lane">
+                <div class="horse"
+                     data-speed="@horse.Speed"
+                     data-stamina="@horse.Stamina">
+                    🐎
+                </div>
+            </div>
+        }
+    </div>
+
+    <button onclick="startRace()">Старт</button>
+
+    <script src="~/js/race.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+}
+
+.track {
+    width: 800px;
+    margin-bottom: 20px;
+}
+
+.lane {
+    position: relative;
+    height: 50px;
+    border-bottom: 1px solid #ccc;
+}
+
+.horse {
+    position: absolute;
+    left: 0;
+    top: 10px;
+    font-size: 24px;
+    transition: left 0.1s linear;
+}
