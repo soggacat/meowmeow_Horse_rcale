@@ -1,31 +1,57 @@
 ﻿@model List<Horse_Rcale.Models.Horse>
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <title>Киберскачки</title>
-    <link rel="stylesheet" href="~/css/race.css" />
-</head>
-<body>
+<link rel="stylesheet" href="~/css/race.css" />
 
-    <h2>Киберскачки — Демонстрация</h2>
+<!-- ПАНЕЛЬ РЕЖИМОВ -->
+<div class="mode-panel">
+    <a href="/Race/SetRandomMode">🎲 Случайные лошади</a>
+    <a href="/Race/SetCustomMode">🐎 Своя конюшня</a>
+</div>
 
-    <div class="track">
-        @foreach (var horse in Model)
-        {
-            <div class="lane">
-                <div class="horse"
-                     data-speed="@horse.Speed"
-                     data-stamina="@horse.Stamina">
-                    🐎
-                </div>
-            </div>
-        }
+<!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+<div class="top-panel">
+    <div id="top-track"></div>
+</div>
+
+<div class="layout">
+
+    <!-- ЛОГ -->
+    <div class="log-panel">
+        <h4>Позиции</h4>
+        <ul id="log"></ul>
     </div>
 
-    <button onclick="startRace()">Старт</button>
+    <!-- ТРЕК -->
+    <div class="track">
+        @if (!Model.Any())
+        {
+            <p>Нет лошадей для гонки</p>
+        }
+        else
+        {
+            foreach (var horse in Model)
+            {
+                <div class="lane">
+                    <div class="horse"
+                         data-id="@horse.Id"
+                         data-name="@horse.Name"
+                         data-speed="@horse.Speed"
+                         data-stamina="@horse.Stamina">
+                        🐎 @horse.Name
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
 
-    <script src="~/js/race.js"></script>
-</body>
-</html>
+<div class="controls">
+    <button onclick="startRace()">Старт</button>
+    <a href="/Race/Create">Создать лошадь</a>
+
+    <form method="post" action="/Race/ResetCustom" style="display:inline;">
+        <button type="submit">Сброс конюшни</button>
+    </form>
+</div>
+
+<script src="~/js/race.js"></script>
