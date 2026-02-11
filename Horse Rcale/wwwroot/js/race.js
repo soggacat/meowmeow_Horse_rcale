@@ -1,16 +1,12 @@
 ﻿let raceInterval = null;
-const FINISH_LINE = 750; // длина трека в px
+const FINISH_LINE = 750;
 
-// =======================
-// СТАРТ ГОНКИ
-// =======================
 function startRace() {
     if (raceInterval !== null) return;
 
     const horses = document.querySelectorAll(".horse");
     if (horses.length === 0) return;
 
-    // сброс позиций
     horses.forEach(h => {
         h.style.left = "0px";
         h.dataset.finished = "false";
@@ -19,9 +15,6 @@ function startRace() {
     raceInterval = setInterval(updateRace, 100);
 }
 
-// =======================
-// ОБНОВЛЕНИЕ ГОНКИ
-// =======================
 function updateRace() {
     const horses = Array.from(document.querySelectorAll(".horse"));
     let finishedCount = 0;
@@ -55,23 +48,19 @@ function updateRace() {
     updateLog(horses);
     updateTopPanel(horses);
 
-    // если все финишировали — стоп
     if (finishedCount === horses.length) {
         clearInterval(raceInterval);
         raceInterval = null;
     }
 }
 
-// =======================
-// ЛОГ СЛЕВА (С ПОСЛЕДНЕГО К ПЕРВОМУ)
-// =======================
 function updateLog(horses) {
     const log = document.getElementById("log");
     if (!log) return;
 
     // сортировка: от последнего к первому
     const sorted = [...horses].sort((a, b) =>
-        parseFloat(a.style.left  "0") - parseFloat(b.style.left  "0")
+        parseFloat(a.style.left || "0") - parseFloat(b.style.left || "0")
     );
 
     log.innerHTML = "";
@@ -80,14 +69,11 @@ function updateLog(horses) {
         const li = document.createElement("li");
         const place = sorted.length - index;
 
-        li.textContent = ${ place } место — ${ horse.dataset.name };
+        li.textContent = `${place} место — ${horse.dataset.name}`;
         log.appendChild(li);
     });
 }
 
-// =======================
-// ВЕРХНЯЯ ПАНЕЛЬ (С ПЕРВОГО К ПОСЛЕДНЕМУ)
-// =======================
 function updateTopPanel(horses) {
     const topTrack = document.getElementById("top-track");
     if (!topTrack) return;
@@ -96,7 +82,7 @@ function updateTopPanel(horses) {
 
     // сортировка: от первого к последнему
     const sorted = [...horses].sort((a, b) =>
-        parseFloat(b.style.left  "0") - parseFloat(a.style.left  "0")
+        parseFloat(b.style.left || "0") - parseFloat(a.style.left || "0")
     );
 
     sorted.forEach((horse, index) => {
