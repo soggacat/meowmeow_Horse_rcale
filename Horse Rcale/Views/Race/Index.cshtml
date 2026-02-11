@@ -1,57 +1,160 @@
-﻿@model List<Horse_Rcale.Models.Horse>
+@model List<Horse_Rcale.Models.Horse>
 
 <link rel="stylesheet" href="~/css/race.css" />
 
-<!-- ПАНЕЛЬ РЕЖИМОВ -->
-<div class="mode-panel">
-    <a href="/Race/SetRandomMode">🎲 Случайные лошади</a>
-    <a href="/Race/SetCustomMode">🐎 Своя конюшня</a>
-</div>
-
-<!-- ВЕРХНЯЯ ПАНЕЛЬ -->
-<div class="top-panel">
-    <div id="top-track"></div>
-</div>
-
-<div class="layout">
-
-    <!-- ЛОГ -->
-    <div class="log-panel">
-        <h4>Позиции</h4>
-        <ul id="log"></ul>
+<div class="race-page">
+    <div class="race-header-row">
+        <div class="stable-pill">
+            <span class="stable-icon">👤</span>
+            <span class="stable-name">Champion Stable</span>
+        </div>
+        <div class="race-page-title">Horse Racing Simulator</div>
+        <div class="race-header-actions">
+            <div class="mode-panel">
+                <a href="/Race/SetRandomMode" class="mode-link">Random Stable</a>
+                <a href="/Race/SetCustomMode" class="mode-link">Custom Stable</a>
+            </div>
+        </div>
     </div>
 
-    <!-- ТРЕК -->
-    <div class="track">
-        @if (!Model.Any())
-        {
-            <p>Нет лошадей для гонки</p>
-        }
-        else
-        {
-            foreach (var horse in Model)
-            {
-                <div class="lane">
-                    <div class="horse"
-                         data-id="@horse.Id"
-                         data-name="@horse.Name"
-                         data-speed="@horse.Speed"
-                         data-stamina="@horse.Stamina">
-                        🐎 @horse.Name
-                    </div>
+    <section class="race-progress">
+        <div class="race-progress-header">
+            <div class="race-progress-title">Race Progress</div>
+            <div class="race-progress-percent-labels">
+                <span>25%</span>
+                <span>50%</span>
+                <span>75%</span>
+            </div>
+        </div>
+        <div class="race-progress-track">
+            <div class="race-progress-rail">
+                <div class="race-progress-ticks">
+                    <span></span>
+                    <span></span>
+                    <span></span>
                 </div>
-            }
-        }
+                <div id="top-track" class="race-progress-horses"></div>
+            </div>
+            <div class="race-progress-finish">FINISH</div>
+        </div>
+    </section>
+
+    <section class="race-main">
+        <aside class="panel horses-panel">
+            <div class="panel-header">
+                <h2>Horses (@Model.Count)</h2>
+            </div>
+
+            <div class="horses-list">
+                @if (!Model.Any())
+                {
+                    <p class="empty-state">No horses yet. Choose a mode and create some to begin.</p>
+                }
+                else
+                {
+                    @for (int i = 0; i < Model.Count; i++)
+                    {
+                        var horse = Model[i];
+                        var color = GetHorseColor(i);
+                        <div class="horse-card">
+                            <div class="horse-card-header">
+                                <span class="horse-color-swatch" style="background-color:@color;"></span>
+                                <div class="horse-card-title">
+                                    <div class="horse-name">@horse.Name</div>
+                                    <div class="horse-meta">Horse @((i + 1))</div>
+                                </div>
+                            </div>
+                            <div class="horse-stats">
+                                <div class="horse-stat">
+                                    <span class="horse-stat-label">Speed</span>
+                                    <div class="horse-stat-bar">
+                                        <div class="horse-stat-bar-fill speed" style="width:@(GetPercent(horse.Speed))%;"></div>
+                                    </div>
+                                </div>
+                                <div class="horse-stat">
+                                    <span class="horse-stat-label">Stamina</span>
+                                    <div class="horse-stat-bar">
+                                        <div class="horse-stat-bar-fill stamina" style="width:@(GetPercent(horse.Stamina))%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="horses-actions">
+                <a href="/Race/SetRandomMode" class="btn-secondary">Generate Random Horses</a>
+                <a href="/Race/Create" class="btn-secondary">Create Custom Horse</a>
+                <form method="post" action="/Race/ResetCustom">
+                    <button type="submit" class="btn-ghost">Reset Race</button>
+                </form>
+            </div>
+        </aside>
+
+        <section class="panel track-panel">
+            <div class="panel-header">
+                <h2>Race Track</h2>
+                <span class="panel-subtitle">Click Start Race to begin</span>
+            </div>
+
+            <div class="race-track">
+                @if (!Model.Any())
+                {
+                    <p class="empty-state">No horses available. Add some to start a race.</p>
+                }
+                else
+                {
+                    <div class="race-track-oval">
+                        <div class="race-track-center-line"></div>
+                        @for (int i = 0; i < Model.Count; i++)
+                        {
+                            var horse = Model[i];
+                            var color = GetHorseColor(i);
+                            var verticalOffset = 40 + (i * 40);
+                            <div class="horse"
+                                 data-id="@horse.Id"
+                                 data-name="@horse.Name"
+                                 data-speed="@horse.Speed"
+                                 data-stamina="@horse.Stamina"
+                                 style="top:@(verticalOffset)px; --horse-color:@color;">
+                                <span class="horse-dot"></span>
+                                <span class="horse-label">@horse.Name</span>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </section>
+
+        <aside class="panel log-panel">
+            <div class="panel-header">
+                <h2>Event Log</h2>
+            </div>
+            <ul id="log" class="event-log">
+                <li class="event-log-empty">No events yet</li>
+            </ul>
+        </aside>
+    </section>
+
+    <div class="race-main-action">
+        <button type="button" class="btn-primary" onclick="startRace()">Start Race</button>
     </div>
-</div>
-
-<div class="controls">
-    <button onclick="startRace()">Старт</button>
-    <a href="/Race/Create">Создать лошадь</a>
-
-    <form method="post" action="/Race/ResetCustom" style="display:inline;">
-        <button type="submit">Сброс конюшни</button>
-    </form>
 </div>
 
 <script src="~/js/race.js"></script>
+
+@functions {
+    private static string GetHorseColor(int index)
+    {
+        string[] colors = new[] { "#0f766e", "#f97316", "#3b82f6", "#e11d48", "#6366f1", "#22c55e" };
+        return colors[index % colors.Length];
+    }
+
+    private static int GetPercent(int value)
+    {
+        if (value < 0) value = 0;
+        if (value > 10) value = 10;
+        return value * 10;
+    }
+}

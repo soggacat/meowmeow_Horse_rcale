@@ -1,5 +1,5 @@
-﻿let raceInterval = null;
-const FINISH_LINE = 750;
+let raceInterval = null;
+const FINISH_LINE = 460; // visual finish line inside oval track
 
 function startRace() {
     if (raceInterval !== null) return;
@@ -8,7 +8,8 @@ function startRace() {
     if (horses.length === 0) return;
 
     horses.forEach(h => {
-        h.style.left = "0px";
+        // start slightly inside the left edge of the track
+        h.style.left = "40px";
         h.dataset.finished = "false";
     });
 
@@ -33,7 +34,7 @@ function updateRace() {
         let move = speed - fatigue;
         if (move < 1) move = 1;
 
-        let currentLeft = parseFloat(horse.style.left || "0");
+        let currentLeft = parseFloat(horse.style.left || "40");
         let newLeft = currentLeft + move;
 
         if (newLeft >= FINISH_LINE) {
