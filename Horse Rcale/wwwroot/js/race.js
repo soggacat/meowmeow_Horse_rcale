@@ -1,15 +1,24 @@
 let raceInterval = null;
-const FINISH_LINE = 460; // visual finish line inside oval track
+const START_OFFSET = 20;   // where horses visually start inside the lane
+let FINISH_LINE = 480;     // will be recalculated from lane width on start
 
 function startRace() {
     if (raceInterval !== null) return;
 
-    const horses = document.querySelectorAll(".horse");
+    const horses = document.querySelectorAll(".race-lane .horse");
     if (horses.length === 0) return;
 
+    // вычисляем реальную длину трека по ширине дорожки
+    const firstLane = horses[0].parentElement;
+    if (firstLane) {
+        const laneWidth = firstLane.clientWidth || 520;
+        // немного отступаем от правого края, чтобы точка не упиралась в границу
+        FINISH_LINE = Math.max(START_OFFSET + 50, laneWidth - 40);
+    }
+
     horses.forEach(h => {
-        // start slightly inside the left edge of the track
-        h.style.left = "40px";
+        // start slightly inside the left edge of the lane
+        h.style.left = START_OFFSET + "px";
         h.dataset.finished = "false";
     });
 
@@ -34,7 +43,7 @@ function updateRace() {
         let move = speed - fatigue;
         if (move < 1) move = 1;
 
-        let currentLeft = parseFloat(horse.style.left || "40");
+        let currentLeft = parseFloat(horse.style.left || START_OFFSET);
         let newLeft = currentLeft + move;
 
         if (newLeft >= FINISH_LINE) {
@@ -91,8 +100,11 @@ function updateTopPanel(horses) {
         marker.className = "top-horse";
         marker.textContent = horse.dataset.name;
 
-        // равномерное распределение по линии
-        marker.style.left = (index * 120) + "px";
+        // позиция маркера по фактическому прогрессу лошади
+        const rawLeft = parseFloat(horse.style.left || START_OFFSET);
+        const clamped = Math.min(Math.max(rawLeft, START_OFFSET), FINISH_LINE);
+        const progress = (clamped - START_OFFSET) / (FINISH_LINE - START_OFFSET); // 0..1
+        marker.style.left = (progress * 100) + "%";
 
         topTrack.appendChild(marker);
     });

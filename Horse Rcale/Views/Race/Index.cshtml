@@ -105,23 +105,30 @@
                 }
                 else
                 {
-                    <div class="race-track-oval">
-                        <div class="race-track-center-line"></div>
-                        @for (int i = 0; i < Model.Count; i++)
-                        {
-                            var horse = Model[i];
-                            var color = GetHorseColor(i);
-                            var verticalOffset = 40 + (i * 40);
-                            <div class="horse"
-                                 data-id="@horse.Id"
-                                 data-name="@horse.Name"
-                                 data-speed="@horse.Speed"
-                                 data-stamina="@horse.Stamina"
-                                 style="top:@(verticalOffset)px; --horse-color:@color;">
-                                <span class="horse-dot"></span>
-                                <span class="horse-label">@horse.Name</span>
-                            </div>
-                        }
+                    <div class="race-track-layout">
+                        <div class="race-track-labels">
+                            <span class="track-label track-label-start">START</span>
+                            <span class="track-label track-label-finish">FINISH</span>
+                        </div>
+                        <div class="race-track-lanes">
+                            @for (int i = 0; i < Model.Count; i++)
+                            {
+                                var horse = Model[i];
+                                var color = GetHorseColor(i);
+                                <div class="race-lane">
+                                    <div class="race-lane-line"></div>
+                                    <div class="horse"
+                                         data-id="@horse.Id"
+                                         data-name="@horse.Name"
+                                         data-speed="@horse.Speed"
+                                         data-stamina="@horse.Stamina"
+                                         style="--horse-color:@color;">
+                                        <span class="horse-dot"></span>
+                                        <span class="horse-label">@horse.Name</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
                     </div>
                 }
             </div>
