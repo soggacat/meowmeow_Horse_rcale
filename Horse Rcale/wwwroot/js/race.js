@@ -17,16 +17,20 @@ function startRace() {
     }
 
     horses.forEach(h => {
-        // start slightly inside the left edge of the lane
         h.style.left = START_OFFSET + "px";
         h.dataset.finished = "false";
+        // current stamina starts at max; drains over time during the race
+        h.dataset.currentStamina = h.dataset.stamina;
     });
 
     raceInterval = setInterval(updateRace, 100);
 }
 
+const STAMINA_DRAIN_PER_TICK = 0.22; // how much stamina drops each 100ms (tune feel here)
+const STAMINA_BOOST_AT_MAX = 1.0;    // at stamina=10 and full stamina, speed can be up to base*(1+1.0)=2x
+
 function updateRace() {
-    const horses = Array.from(document.querySelectorAll(".horse"));
+    const horses = Array.from(document.querySelectorAll(".race-lane .horse"));
     let finishedCount = 0;
 
     horses.forEach(horse => {
@@ -35,16 +39,30 @@ function updateRace() {
             return;
         }
 
-        const speed = parseInt(horse.dataset.speed);
-        const stamina = parseInt(horse.dataset.stamina);
+        // Speed is the BASE speed (when stamina is empty).
+        // Stamina provides a temporary multiplier that fades as stamina drains.
+        const baseSpeed = parseInt(horse.dataset.speed) || 5;
+        const staminaMax = parseInt(horse.dataset.stamina) || 5;
+        let currentStamina = parseFloat(horse.dataset.currentStamina);
+        if (isNaN(currentStamina)) currentStamina = staminaMax;
 
-        // формула движения
-        let fatigue = Math.random() * stamina;
-        let move = speed - fatigue;
-        if (move < 1) move = 1;
+        // Drain stamina over time; slightly faster burn for higher baseSpeed.
+        const drain = STAMINA_DRAIN_PER_TICK * (0.85 + 0.3 * (baseSpeed / 10));
+        currentStamina = Math.max(0, currentStamina - drain);
+        horse.dataset.currentStamina = currentStamina;
+
+        // Effective speed:
+        // - At 0 stamina -> baseSpeed
+        // - At full stamina -> baseSpeed * (1 + staminaBoost), where staminaBoost grows with staminaMax
+        const staminaRatio = staminaMax > 0 ? currentStamina / staminaMax : 0;
+        const staminaBoost = (Math.min(Math.max(staminaMax, 0), 10) / 10) * STAMINA_BOOST_AT_MAX;
+        const speedMultiplier = 1 + (staminaBoost * staminaRatio);
+
+        const move = (baseSpeed * speedMultiplier) * (0.85 + 0.3 * Math.random());
+        const actualMove = Math.max(0.35, move);
 
         let currentLeft = parseFloat(horse.style.left || START_OFFSET);
-        let newLeft = currentLeft + move;
+        let newLeft = currentLeft + actualMove;
 
         if (newLeft >= FINISH_LINE) {
             newLeft = FINISH_LINE;
