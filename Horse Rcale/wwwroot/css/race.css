@@ -10,14 +10,346 @@ body {
 
 .lane {
     position: relative;
-    height: 50px;
-    border-bottom: 1px solid #ccc;
+    flex: 1;
+    height: 10px;
+    border-radius: 999px;
+    background: #e5e7eb;
+    overflow: hidden;
+}
+
+.race-progress-ticks {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+}
+
+.race-progress-ticks span {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #d1d5db;
+}
+#top-track {
+    position: absolute;
+    inset: 0;
+}
+
+.top-horse {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    padding: 2px 8px;
+    border-radius: 999px;
+    font-size: 10px;
+    background: #111827;
+    color: #f9fafb;
+    white-space: nowrap;
+}
+
+.race-progress-finish {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #111827;
+    color: #f9fafb;
+}
+
+/* Main layout */
+
+.race-main {
+    display: grid;
+    grid-template-columns: 280px minmax(0, 1.6fr) 260px;
+    gap: 24px;
+    align-items: flex-start;
 }
 
 .horse {
     position: absolute;
     left: 0;
-    top: 10px;
-    font-size: 24px;
-    transition: left 0.1s linear;
+    top: 0;
+    bottom: 0;
+    border-radius: inherit;
 }
+
+.horse-stat-bar-fill.speed {
+    background: linear-gradient(90deg, #22c55e, #16a34a);
+}
+
+.horse-stat-bar-fill.stamina {
+    background: linear-gradient(90deg, #3b82f6, #2563eb);
+}
+
+.horses-actions {
+    margin-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.horses-actions form {
+    margin: 0;
+}
+
+/* Buttons */
+
+.btn-primary,
+.btn-secondary,
+.btn-ghost {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    border-radius: 999px;
+    padding: 9px 14px;
+    font-size: 13px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.05s ease;
+}
+
+.btn-primary {
+    background: #111827;
+    color: #f9fafb;
+    border-color: #111827;
+    box-shadow: 0 10px 24px rgba(15, 23, 42, 0.4);
+}
+
+.btn-primary:hover {
+    background: #020617;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background: #1f2937;
+    color: #f9fafb;
+    border-color: #111827;
+}
+
+.btn-secondary:hover {
+    background: #020617;
+}
+
+.btn-ghost {
+    background: #ffffff;
+    color: #4b5563;
+    border-color: #e5e7eb;
+}
+.horses-header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.horse-add,
+.horse-remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 5px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #4b5563;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    line-height: 1;
+    padding: 0;
+}
+.horse-add {
+    transform: translateY(-1px);
+}
+
+    .horse-add:hover,
+    .horse-remove:hover {
+        background: #111827;
+        color: #f9fafb;
+        border-color: #111827;
+        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.2);
+    }
+
+    .horse-add:active,
+    .horse-remove:active {
+        transform: scale(0.95);
+    }
+
+    .btn-ghost:hover {
+        background: #f3f4f6;
+    }
+
+    .race-main-action {
+        margin-top: 16px;
+        display: flex;
+        justify-content: center;
+    }
+
+        .race-main-action .btn-primary {
+            max-width: 220px;
+        }
+    /* Track panel */
+
+    .race-track {
+        margin-top: 16px;
+        min-height: 340px;
+        background: #f3f4f6;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 26px;
+    }
+
+    .race-track-layout {
+        display: flex;
+        align-items: stretch;
+        gap: 16px;
+        width: 100%;
+        max-width: 520px;
+    }
+
+    .race-track-labels {
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 4px 0;
+    }
+
+    .track-label {
+        font-size: 10px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: #9ca3af;
+    }
+
+    .race-track-lanes {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding: 4px 0;
+    }
+
+    .race-lane {
+        position: relative;
+        height: 44px;
+        border-radius: 999px;
+        background: #e5e7eb;
+        overflow: hidden;
+    }
+
+    .race-lane-line {
+        position: absolute;
+        top: 50%;
+        left: 16px;
+        right: 16px;
+        height: 2px;
+        transform: translateY(-50%);
+        border-radius: 999px;
+        background: #d1d5db;
+    }
+
+    .race-lane .horse {
+        position: absolute;
+        top: 50%;
+        left: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        transform: translateY(-50%);
+        white-space: nowrap;
+    }
+
+    .horse-dot {
+        width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        background: var(--horse-color, #3b82f6);
+        border: 2px solid #e5e7eb;
+        box-shadow: 0 6px 10px rgba(15, 23, 42, 0.25);
+    }
+
+    .horse-label {
+        font-size: 12px;
+        color: #111827;
+    }
+    /* Event log */
+
+    .event-log {
+        list-style: none;
+        margin: 12px 0 0;
+        padding: 0;
+        font-size: 13px;
+        color: #374151;
+        max-height: 380px;
+        overflow-y: auto;
+    }
+
+        .event-log li + li {
+            margin-top: 4px;
+        }
+
+    .event-log-empty {
+        color: #9ca3af;
+        font-style: italic;
+    }
+    /* Responsive */
+
+    @media (max-width: 992px) {
+        .race-main {
+            grid-template-columns: 1fr;
+        }
+
+        .race-header-row {
+            grid-template-columns: 1fr;
+            row-gap: 8px;
+        }
+
+        .race-page-title {
+            order: -1;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .race-page {
+            padding-inline: 4px;
+        }
+
+        .race-track {
+            padding: 18px;
+        }
+
+        .race-track-oval {
+            width: 100%;
+            height: 260px;
+        }
+
+        .horses-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .horse-add,
+        .horse-remove {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 999px; /* как у btn */
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            color: #4b5563;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+    }
+

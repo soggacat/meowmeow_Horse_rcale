@@ -16,8 +16,8 @@ namespace Horse_Rcale.Controllers
                 horses.Add(new Horse
                 {
                     Id = i,
-                    Speed = random.Next(5, 11),     // 5–10
-                    Stamina = random.Next(5, 11)   // 5–10
+                    Speed = random.Next(5, 11),     // 5ï¿½10
+                    Stamina = random.Next(5, 11)   // 5ï¿½10
                 });
             }
 
