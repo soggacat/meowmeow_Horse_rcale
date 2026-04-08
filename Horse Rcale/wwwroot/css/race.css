@@ -93,6 +93,94 @@ body {
     margin: 0;
 }
 
+/* Horses cards (left panel) */
+.horses-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 14px;
+}
+
+.empty-state {
+    margin: 12px 0;
+    color: #6b7280;
+    font-size: 13px;
+    font-style: italic;
+}
+
+.horse-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    padding: 12px 12px;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+}
+
+.horse-card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.horse-color-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: #0f766e;
+    border: 2px solid #e5e7eb;
+}
+
+.horse-card-title {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.horse-name {
+    font-size: 14px;
+    font-weight: 750;
+    color: #111827;
+}
+
+.horse-meta {
+    font-size: 12px;
+    color: #6b7280;
+}
+
+.horse-stats {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.horse-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.horse-stat-label {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #6b7280;
+}
+
+.horse-stat-bar {
+    height: 10px;
+    border-radius: 999px;
+    background: #f3f4f6;
+    overflow: hidden;
+}
+
+.horse-stat-bar-fill {
+    height: 100%;
+    border-radius: 999px;
+    width: 0%;
+    transition: width 0.2s ease;
+}
+
 /* Buttons */
 
 .btn-primary,
