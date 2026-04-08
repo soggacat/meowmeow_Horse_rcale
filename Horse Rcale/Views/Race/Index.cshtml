@@ -1,6 +1,6 @@
 @model List<Horse_Rcale.Models.Horse>
 
-<link rel="stylesheet" href="~/css/race.css" />
+<link rel="stylesheet" href="~/css/race.css" asp-append-version="true" />
 
 <div class="race-page">
     <div class="race-header-row">
@@ -20,7 +20,7 @@
     <section class="race-progress">
         <div class="race-progress-header">
             <div class="race-progress-title">Race Progress</div>
-            <div class="race-progress-percent-&lt;p&gt;learning is fun&lt;/p&gt;&lt;p&gt;learning is fun&lt;/p&gt;&lt;p&gt;learning is fun&lt;/p&gt;&lt;p&gt;learning is fun&lt;/p&gt;&lt;p&gt;learning is fun&lt;/p&gt;&lt;p&gt;learning is fun&lt;/p&gt;&lt;p&gt;learning is fun&lt;/p&gt;labels">
+            <div class="race-progress-percent-labels">
                 <span>25%</span>
                 <span>50%</span>
                 <span>75%</span>
@@ -43,6 +43,7 @@
         <aside class="panel horses-panel">
             <div class="panel-header">
                 <h2>Horses (@Model.Count)</h2>
+                <span class="panel-subtitle">Select one horse to bet on</span>
             </div>
 
             <div class="horses-list">
@@ -56,12 +57,19 @@
                     {
                         var horse = Model[i];
                         var color = GetHorseColor(i);
-                        <div class="horse-card">
+                        <div class="horse-card js-horse-pick" data-id="@horse.Id" data-name="@horse.Name" data-odds="@horse.Position">
                             <div class="horse-card-header">
+                                <label class="horse-select-checkbox">
+                                    <input type="checkbox"
+                                           class="js-horse-select"
+                                           data-id="@horse.Id"
+                                           data-name="@horse.Name" />
+                                    <span class="checkmark"></span>
+                                </label>
                                 <span class="horse-color-swatch" style="background-color:@color;"></span>
                                 <div class="horse-card-title">
                                     <div class="horse-name">@horse.Name</div>
-                                    <div class="horse-meta">Horse @((i + 1))</div>
+                                    <div class="horse-meta">Speed: @horse.Speed | Stamina: @horse.Stamina</div>
                                 </div>
                             </div>
                             <div class="horse-stats">
@@ -95,7 +103,7 @@
         <section class="panel track-panel">
             <div class="panel-header">
                 <h2>Race Track</h2>
-                <span class="panel-subtitle">Click Start Race to begin</span>
+                <span class="panel-subtitle">Place your bet, then start the race</span>
             </div>
 
             <div class="race-track">
@@ -105,6 +113,33 @@
                 }
                 else
                 {
+                    <div class="betting-panel" aria-live="polite">
+                        <div class="betting-row">
+                            <div class="betting-stat">
+                                <div class="betting-stat-label">Capital</div>
+                                <div class="betting-stat-value">$<span id="capital">100</span></div>
+                            </div>
+                            <div class="betting-stat">
+                                <div class="betting-stat-label">Current Bet</div>
+                                <div class="betting-stat-value">$<span id="bet">0</span></div>
+                            </div>
+                            <div class="betting-stat">
+                                <div class="betting-stat-label">Selected Horse</div>
+                                <div class="betting-stat-value"><span id="selected-horse">None</span></div>
+                            </div>
+                        </div>
+
+                        <div class="betting-controls">
+                            <button type="button" class="btn-ghost btn-mini" id="bet-minus" disabled>-10</button>
+                            <button type="button" class="btn-ghost btn-mini" id="bet-plus">+10</button>
+                            <button type="button" class="btn-secondary btn-mini" id="bet-allin">All in</button>
+                            <button type="button" class="btn-primary btn-mini" id="place-bet" disabled>Place Bet</button>
+                            <button type="button" class="btn-ghost btn-mini" id="restart-game" hidden>Restart Game</button>
+                        </div>
+
+                        <div class="betting-message" id="bet-message">Select a horse from the list to begin.</div>
+                    </div>
+
                     <div class="race-track-layout">
                         <div class="race-track-labels">
                             <span class="track-label track-label-start">START</span>
@@ -122,6 +157,7 @@
                                          data-name="@horse.Name"
                                          data-speed="@horse.Speed"
                                          data-stamina="@horse.Stamina"
+                                         data-odds="@horse.Position"
                                          style="--horse-color:@color;">
                                         <span class="horse-dot"></span>
                                         <span class="horse-label">@horse.Name</span>
@@ -145,11 +181,11 @@
     </section>
 
     <div class="race-main-action">
-        <button type="button" class="btn-primary" onclick="startRace()">Start Race</button>
+        <button type="button" class="btn-primary" id="start-race-btn" disabled>🏁 Start Race</button>
     </div>
 </div>
 
-<script src="~/js/race.js"></script>
+<script src="~/js/race.js" asp-append-version="true"></script>
 
 @functions {
     private static string GetHorseColor(int index)
