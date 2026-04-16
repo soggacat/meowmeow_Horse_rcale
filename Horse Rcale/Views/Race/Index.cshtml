@@ -3,50 +3,20 @@
 <link rel="stylesheet" href="~/css/race.css" asp-append-version="true" />
 
 <div class="race-page">
-    <div class="race-header-row">
-        <div class="stable-pill">
-            <span class="stable-icon">👤</span>
-            <span class="stable-name">Champion Stable</span>
-        </div>
-        <div class="race-page-title">Horse Racing Simulator</div>
-        <div class="race-header-actions">
-            <div class="mode-panel">
-                <a href="/Race/SetRandomMode" class="mode-link">Random Stable</a>
-                <a href="/Race/SetCustomMode" class="mode-link">Custom Stable</a>
-            </div>
-        </div>
-    </div>
-
-    <section class="race-progress">
-        <div class="race-progress-header">
-            <div class="race-progress-title">Race Progress</div>
-            <div class="race-progress-percent-labels">
-                <span>25%</span>
-                <span>50%</span>
-                <span>75%</span>
-            </div>
-        </div>
-        <div class="race-progress-track">
-            <div class="race-progress-rail">
-                <div class="race-progress-ticks">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                </div>
-                <div id="top-track" class="race-progress-horses"></div>
-            </div>
-            <div class="race-progress-finish">FINISH</div>
-        </div>
-    </section>
+    <div class="race-page-title">Horse Racing Simulator</div>
 
     <section class="race-main">
         <aside class="panel horses-panel">
             <div class="panel-header">
-                <h2>Horses (@Model.Count)</h2>
+                <div class="horses-header-left">
+                    <h2>Horses (<span id="horses-count">@Model.Count</span>)</h2>
+                    <button type="button" id="horse-add" class="horse-action-btn">+</button>
+                    <button type="button" id="horse-remove" class="horse-action-btn">-</button>
+                </div>
                 <span class="panel-subtitle">Select one horse to bet on</span>
             </div>
 
-            <div class="horses-list">
+            <div class="horses-list" id="horses-list">
                 @if (!Model.Any())
                 {
                     <p class="empty-state">No horses yet. Choose a mode and create some to begin.</p>
@@ -92,8 +62,6 @@
             </div>
 
             <div class="horses-actions">
-                <a href="/Race/SetRandomMode" class="btn-secondary">Generate Random Horses</a>
-                <a href="/Race/Create" class="btn-secondary">Create Custom Horse</a>
                 <form method="post" action="/Race/ResetCustom">
                     <button type="submit" class="btn-ghost">Reset Race</button>
                 </form>
@@ -113,39 +81,12 @@
                 }
                 else
                 {
-                    <div class="betting-panel" aria-live="polite">
-                        <div class="betting-row">
-                            <div class="betting-stat">
-                                <div class="betting-stat-label">Capital</div>
-                                <div class="betting-stat-value">$<span id="capital">100</span></div>
-                            </div>
-                            <div class="betting-stat">
-                                <div class="betting-stat-label">Current Bet</div>
-                                <div class="betting-stat-value">$<span id="bet">0</span></div>
-                            </div>
-                            <div class="betting-stat">
-                                <div class="betting-stat-label">Selected Horse</div>
-                                <div class="betting-stat-value"><span id="selected-horse">None</span></div>
-                            </div>
-                        </div>
-
-                        <div class="betting-controls">
-                            <button type="button" class="btn-ghost btn-mini" id="bet-minus" disabled>-10</button>
-                            <button type="button" class="btn-ghost btn-mini" id="bet-plus">+10</button>
-                            <button type="button" class="btn-secondary btn-mini" id="bet-allin">All in</button>
-                            <button type="button" class="btn-primary btn-mini" id="place-bet" disabled>Place Bet</button>
-                            <button type="button" class="btn-ghost btn-mini" id="restart-game" hidden>Restart Game</button>
-                        </div>
-
-                        <div class="betting-message" id="bet-message">Select a horse from the list to begin.</div>
-                    </div>
-
                     <div class="race-track-layout">
                         <div class="race-track-labels">
                             <span class="track-label track-label-start">START</span>
                             <span class="track-label track-label-finish">FINISH</span>
                         </div>
-                        <div class="race-track-lanes">
+                        <div class="race-track-lanes" id="race-track-lanes">
                             @for (int i = 0; i < Model.Count; i++)
                             {
                                 var horse = Model[i];
@@ -168,21 +109,39 @@
                     </div>
                 }
             </div>
-        </section>
-
-        <aside class="panel log-panel">
-            <div class="panel-header">
-                <h2>Event Log</h2>
+            <div class="race-main-action">
+                <button type="button" class="btn-primary" id="start-race-btn" disabled>🏁 Start Race</button>
             </div>
-            <ul id="log" class="event-log">
-                <li class="event-log-empty">No events yet</li>
-            </ul>
+        </section>
+        
+        <aside class="panel betting-panel" aria-live="polite">
+            <div class="panel-header">
+                <h2>Betting Panel</h2>
+            </div>
+            <div class="betting-row">
+                <div class="betting-stat">
+                    <div class="betting-stat-label">Capital</div>
+                    <div class="betting-stat-value">$<span id="capital">100</span></div>
+                </div>
+                <div class="betting-stat">
+                    <div class="betting-stat-label">Current Bet</div>
+                    <div class="betting-stat-value">$<span id="bet">0</span></div>
+                </div>
+                <div class="betting-stat">
+                    <div class="betting-stat-label">Selected Horse</div>
+                    <div class="betting-stat-value"><span id="selected-horse">None</span></div>
+                </div>
+            </div>
+            <div class="betting-controls">
+                <button type="button" class="btn-ghost btn-mini" id="bet-minus" disabled>-10</button>
+                <button type="button" class="btn-ghost btn-mini" id="bet-plus">+10</button>
+                <button type="button" class="btn-secondary btn-mini" id="bet-allin">All in</button>
+                <button type="button" class="btn-primary btn-mini" id="place-bet" disabled>Place Bet</button>
+                <button type="button" class="btn-ghost btn-mini" id="restart-game" hidden>Restart Game</button>
+            </div>
+            <div class="betting-message" id="bet-message">Select a horse from the list to begin.</div>
         </aside>
     </section>
-
-    <div class="race-main-action">
-        <button type="button" class="btn-primary" id="start-race-btn" disabled>🏁 Start Race</button>
-    </div>
 </div>
 
 <script src="~/js/race.js" asp-append-version="true"></script>

@@ -7,39 +7,8 @@ body {
 .race-page {
     display: flex;
     flex-direction: column;
-    gap: 24px;
-    padding: 24px 0 40px;
-}
-
-.race-header-row {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
     gap: 16px;
-}
-
-.stable-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 6px 12px;
-    border-radius: 999px;
-    background: #f3f4ff;
-    border: 1px solid #e0e7ff;
-    color: #1f2937;
-    font-size: 13px;
-}
-
-.stable-icon {
-    width: 20px;
-    height: 20px;
-    border-radius: 999px;
-    background: #111827;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    color: #f9fafb;
-    font-size: 11px;
+    padding: 24px 0 40px;
 }
 
 .race-page-title {
@@ -50,137 +19,9 @@ body {
     color: #111827;
 }
 
-.race-header-actions {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.mode-panel {
-    display: inline-flex;
-    gap: 8px;
-}
-
-.mode-link {
-    font-size: 12px;
-    padding: 6px 10px;
-    border-radius: 999px;
-    border: 1px solid #e5e7eb;
-    background: #ffffff;
-    color: #4b5563;
-    text-decoration: none;
-    transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
-}
-
-    .mode-link:hover {
-        background: #111827;
-        color: #f9fafb;
-        border-color: #111827;
-        box-shadow: 0 6px 18px rgba(15, 23, 42, 0.2);
-    }
-
-.race-progress {
-    background: #ffffff;
-    border-radius: 10px;
-    border: 1px solid #e5e7eb;
-    padding: 14px 20px 12px;
-    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
-}
-
-.race-progress-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 12px;
-    color: #6b7280;
-    margin-bottom: 6px;
-}
-
-.race-progress-title {
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    font-size: 11px;
-    color: #4b5563;
-}
-
-.race-progress-percent-labels {
-    display: flex;
-    gap: 16px;
-    font-size: 11px;
-    color: #9ca3af;
-}
-
-.race-progress-track {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-
-.race-progress-rail {
-    position: relative;
-    flex: 1;
-    height: 10px;
-    border-radius: 999px;
-    background: #e5e7eb;
-    overflow: hidden;
-}
-
-.race-progress-ticks {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-}
-
-    .race-progress-ticks span {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        width: 2px;
-        background: #d1d5db;
-    }
-
-        .race-progress-ticks span:nth-child(1) {
-            left: 25%;
-        }
-
-        .race-progress-ticks span:nth-child(2) {
-            left: 50%;
-        }
-
-        .race-progress-ticks span:nth-child(3) {
-            left: 75%;
-        }
-
-#top-track {
-    position: absolute;
-    inset: 0;
-}
-
-.top-horse {
-    position: absolute;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    padding: 2px 8px;
-    border-radius: 999px;
-    font-size: 10px;
-    background: #111827;
-    color: #f9fafb;
-    white-space: nowrap;
-}
-
-.race-progress-finish {
-    font-size: 11px;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    padding: 4px 10px;
-    border-radius: 999px;
-    background: #111827;
-    color: #f9fafb;
-}
-
 .race-main {
     display: grid;
-    grid-template-columns: 280px minmax(0, 1.6fr) 260px;
+    grid-template-columns: 300px minmax(0, 1.6fr) 300px;
     gap: 24px;
     align-items: flex-start;
 }
@@ -379,19 +220,13 @@ body {
     gap: 8px;
 }
 
-    .horses-actions form {
-        margin: 0;
-    }
+.horses-actions form {
+    margin: 0;
+}
 
 .betting-panel {
-    width: 100%;
-    max-width: 520px;
-    margin: 0 auto 14px;
-    padding: 12px 14px;
-    border-radius: 14px;
-    border: 1px solid #e5e7eb;
-    background: #ffffff;
-    box-shadow: 0 12px 22px rgba(15, 23, 42, 0.05);
+    position: sticky;
+    top: 16px;
 }
 
 .betting-row {
@@ -418,7 +253,7 @@ body {
 .betting-controls {
     margin-top: 10px;
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
 }
 
@@ -505,7 +340,7 @@ body {
     }
 
 .race-main-action {
-    margin-top: 24px;
+    margin-top: 14px;
     display: flex;
     justify-content: center;
 }
@@ -617,37 +452,40 @@ body {
     color: #111827;
 }
 
-.event-log {
-    list-style: none;
-    margin: 12px 0 0;
-    padding: 0;
-    font-size: 13px;
-    color: #374151;
-    max-height: 380px;
-    overflow-y: auto;
+.horses-header-left {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
 }
 
-    .event-log li + li {
-        margin-top: 4px;
-    }
+.horse-action-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #e5e7eb;
+    background: #ffffff;
+    color: #374151;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
 
-.event-log-empty {
-    color: #9ca3af;
-    font-style: italic;
+.horse-action-btn:hover {
+    background: #111827;
+    color: #ffffff;
+    border-color: #111827;
+}
+
+.horse-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 @media (max-width: 992px) {
     .race-main {
         grid-template-columns: 1fr;
-    }
-
-    .race-header-row {
-        grid-template-columns: 1fr;
-        row-gap: 8px;
-    }
-
-    .race-page-title {
-        order: -1;
     }
 }
 

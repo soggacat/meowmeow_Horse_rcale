@@ -2,65 +2,70 @@ let raceInterval = null;
 const START_OFFSET = 20;
 let FINISH_LINE = 480;
 
-// ===== Betting game state =====
 let capital = 100;
 let currentBet = 0;
 let selectedHorseId = null;
 let selectedHorseName = null;
-let selectedHorseOdds = null; // Odds multiplier (0/null should not auto-force a loss on win)
+let selectedHorseOdds = null;
 let reservedBet = 0;
 let gameLocked = false;
 let betPlaced = false;
 
-// ===== Race result tracking =====
 let raceTick = 0;
 let winnerHorseId = null;
 let winnerFinishAt = Infinity;
 
-// ✅ Безопасная функция получения элемента
+const STAMINA_DRAIN_PER_TICK = 0.22;
+const STAMINA_BOOST_AT_MAX = 1.0;
+const HORSE_COLORS = ["#0f766e", "#f97316", "#3b82f6", "#e11d48", "#6366f1", "#22c55e"];
+
 function getElement(id) {
-    const el = document.getElementById(id);
-    if (!el) {
-        console.warn("⚠️ Элемент не найден:", id);
-    }
-    return el;
+    return document.getElementById(id);
 }
 
 function getHorseElements() {
     return Array.from(document.querySelectorAll(".race-lane .horse"));
 }
 
+function getHorseCards() {
+    return Array.from(document.querySelectorAll(".horse-card.js-horse-pick"));
+}
+
+function getHorseColor(index) {
+    return HORSE_COLORS[index % HORSE_COLORS.length];
+}
+
+function randomStat() {
+    return Math.floor(Math.random() * 6) + 5;
+}
+
+function getNextHorseId() {
+    const allIds = [
+        ...getHorseCards().map(c => parseInt(c.dataset.id, 10)),
+        ...getHorseElements().map(h => parseInt(h.dataset.id, 10))
+    ].filter(Number.isFinite);
+
+    return allIds.length ? Math.max(...allIds) + 1 : 1;
+}
+
 function getHorseNameById(id) {
     if (!id) return "None";
-
-    let card = document.querySelector(`.horse-card.js-horse-pick[data-id="${id}"]`);
-    if (card && card.dataset && card.dataset.name) {
-        return card.dataset.name;
-    }
-
-    let horse = document.querySelector(`.race-lane .horse[data-id="${id}"]`);
-    if (horse && horse.dataset && horse.dataset.name) {
-        return horse.dataset.name;
-    }
-
+    const card = document.querySelector(`.horse-card.js-horse-pick[data-id="${id}"]`);
+    if (card?.dataset?.name) return card.dataset.name;
+    const horse = document.querySelector(`.race-lane .horse[data-id="${id}"]`);
+    if (horse?.dataset?.name) return horse.dataset.name;
     return `Horse ${id}`;
 }
 
 function getHorseOddsById(id) {
     if (!id) return null;
-
     const card = document.querySelector(`.horse-card.js-horse-pick[data-id="${id}"]`);
     const lane = document.querySelector(`.race-lane .horse[data-id="${id}"]`);
-    const raw = (lane && lane.dataset && lane.dataset.odds) ??
-        (card && card.dataset && card.dataset.odds);
-
+    const raw = lane?.dataset?.odds ?? card?.dataset?.odds;
     if (raw === undefined || raw === null || raw === "") return null;
-
-    // Normalize possible locale decimal commas (e.g. "0,5") into dot format.
     const normalized = String(raw).trim().replace(",", ".");
     const num = parseFloat(normalized);
-    if (!Number.isFinite(num)) return null;
-    return num;
+    return Number.isFinite(num) ? num : null;
 }
 
 function clearHorseHighlights() {
@@ -78,6 +83,11 @@ function setMessage(text, kind) {
     msg.textContent = text;
 }
 
+function updateHorseCount() {
+    const countEl = getElement("horses-count");
+    if (countEl) countEl.textContent = String(getHorseCards().length);
+}
+
 function syncUI() {
     const capEl = getElement("capital");
     const betEl = getElement("bet");
@@ -85,34 +95,27 @@ function syncUI() {
 
     if (capEl) capEl.textContent = String(capital);
     if (betEl) betEl.textContent = String(currentBet);
+    if (selEl) selEl.textContent = selectedHorseId ? (selectedHorseName || getHorseNameById(selectedHorseId)) : "None";
 
-    if (selEl) {
-        if (selectedHorseId) {
-            selEl.textContent = selectedHorseName || getHorseNameById(selectedHorseId);
-        } else {
-            selEl.textContent = "None";
-        }
-    }
+    const hasHorses = getHorseElements().length > 0;
+    const hasActiveRoundBet = betPlaced && reservedBet > 0;
+    const isGameOver = capital <= 0 && !hasActiveRoundBet;
+    const canInteract = hasHorses && !gameLocked && !isGameOver;
+    const canBet = canInteract && !betPlaced;
 
-    const minusBtn = getElement("bet-minus");
-    const plusBtn = getElement("bet-plus");
+    const betMinusBtn = getElement("bet-minus");
+    const betPlusBtn = getElement("bet-plus");
     const allInBtn = getElement("bet-allin");
     const placeBtn = getElement("place-bet");
     const restartBtn = getElement("restart-game");
     const startRaceBtn = getElement("start-race-btn");
+    const horseAddBtn = getElement("horse-add");
+    const horseRemoveBtn = getElement("horse-remove");
 
-    const hasHorses = getHorseElements().length > 0;
-    const isGameOver = capital <= 0;
-    const canInteract = hasHorses && !gameLocked && !isGameOver;
-    const canBet = canInteract && !betPlaced;
-
-    if (minusBtn) minusBtn.disabled = !canBet || currentBet <= 0;
-    if (plusBtn) plusBtn.disabled = !canBet || currentBet >= capital;
+    if (betMinusBtn) betMinusBtn.disabled = !canBet || currentBet <= 0;
+    if (betPlusBtn) betPlusBtn.disabled = !canBet || currentBet >= capital;
     if (allInBtn) allInBtn.disabled = !canBet || capital <= 0;
-
-    const canPlaceBet = canInteract && currentBet > 0 && selectedHorseId && !betPlaced;
-    if (placeBtn) placeBtn.disabled = !canPlaceBet;
-
+    if (placeBtn) placeBtn.disabled = !(canInteract && currentBet > 0 && selectedHorseId && !betPlaced);
     if (startRaceBtn) startRaceBtn.disabled = !canInteract || !betPlaced;
 
     if (restartBtn) {
@@ -120,35 +123,28 @@ function syncUI() {
         restartBtn.disabled = gameLocked && !isGameOver;
     }
 
+    if (horseAddBtn) horseAddBtn.disabled = gameLocked || betPlaced;
+    if (horseRemoveBtn) horseRemoveBtn.disabled = gameLocked || betPlaced || !hasHorses;
+
     if (isGameOver) {
         setMessage("Game Over. You are out of capital. Restart to play again.", "is-lose");
     }
 }
 
 function selectHorse(id) {
-    console.log("🎯 selectHorse вызван:", { id, type: typeof id });
-
-    if (gameLocked || capital <= 0 || betPlaced) {
-        console.warn("⛔ Выбор заблокирован:", { gameLocked, capital, betPlaced });
-        return;
-    }
+    if (gameLocked || capital <= 0 || betPlaced) return;
 
     if (selectedHorseId === String(id)) {
         selectedHorseId = null;
         selectedHorseName = null;
         selectedHorseOdds = null;
-
         document.querySelectorAll(".js-horse-select").forEach(cb => {
             cb.checked = false;
         });
-        console.log("✅ Выбор снят");
     } else {
         selectedHorseId = String(id);
         selectedHorseName = getHorseNameById(id);
         selectedHorseOdds = getHorseOddsById(id);
-
-        console.log("✅ Лошадь выбрана:", { id, name: selectedHorseName });
-
         document.querySelectorAll(".js-horse-select").forEach(cb => {
             cb.checked = String(cb.dataset.id) === selectedHorseId;
         });
@@ -171,6 +167,160 @@ function selectHorse(id) {
     syncUI();
 }
 
+function createHorseCard(horse, index) {
+    const color = getHorseColor(index);
+    const speedWidth = Math.max(0, Math.min(10, horse.speed)) * 10;
+    const staminaWidth = Math.max(0, Math.min(10, horse.stamina)) * 10;
+    const card = document.createElement("div");
+    card.className = "horse-card js-horse-pick";
+    card.dataset.id = String(horse.id);
+    card.dataset.name = horse.name;
+    card.dataset.odds = String(horse.odds);
+    card.innerHTML = `
+        <div class="horse-card-header">
+            <label class="horse-select-checkbox">
+                <input type="checkbox" class="js-horse-select" data-id="${horse.id}" data-name="${horse.name}">
+                <span class="checkmark"></span>
+            </label>
+            <span class="horse-color-swatch" style="background-color:${color};"></span>
+            <div class="horse-card-title">
+                <div class="horse-name">${horse.name}</div>
+                <div class="horse-meta">Speed: ${horse.speed} | Stamina: ${horse.stamina}</div>
+            </div>
+        </div>
+        <div class="horse-stats">
+            <div class="horse-stat">
+                <span class="horse-stat-label">Speed</span>
+                <div class="horse-stat-bar">
+                    <div class="horse-stat-bar-fill speed" style="width:${speedWidth}%;"></div>
+                </div>
+            </div>
+            <div class="horse-stat">
+                <span class="horse-stat-label">Stamina</span>
+                <div class="horse-stat-bar">
+                    <div class="horse-stat-bar-fill stamina" style="width:${staminaWidth}%;"></div>
+                </div>
+            </div>
+        </div>
+    `;
+    return card;
+}
+
+function createRaceLane(horse, index) {
+    const color = getHorseColor(index);
+    const lane = document.createElement("div");
+    lane.className = "race-lane";
+    lane.innerHTML = `
+        <div class="race-lane-line"></div>
+        <div class="horse"
+             data-id="${horse.id}"
+             data-name="${horse.name}"
+             data-speed="${horse.speed}"
+             data-stamina="${horse.stamina}"
+             data-odds="${horse.odds}"
+             style="--horse-color:${color};">
+            <span class="horse-dot"></span>
+            <span class="horse-label">${horse.name}</span>
+        </div>
+    `;
+    return lane;
+}
+
+function ensureTrackLayout() {
+    const track = document.querySelector(".race-track");
+    if (!track) return null;
+
+    let layout = track.querySelector(".race-track-layout");
+    if (layout) return layout.querySelector(".race-track-lanes");
+
+    track.innerHTML = `
+        <div class="race-track-layout">
+            <div class="race-track-labels">
+                <span class="track-label track-label-start">START</span>
+                <span class="track-label track-label-finish">FINISH</span>
+            </div>
+            <div class="race-track-lanes" id="race-track-lanes"></div>
+        </div>
+    `;
+
+    return track.querySelector("#race-track-lanes");
+}
+
+function addHorse() {
+    if (gameLocked || betPlaced) return;
+
+    const horsesList = getElement("horses-list");
+    if (!horsesList) return;
+
+    const inputName = window.prompt("Enter horse name:");
+    if (inputName === null) return;
+
+    const trimmed = inputName.trim();
+    if (!trimmed) return;
+
+    const horse = {
+        id: getNextHorseId(),
+        name: trimmed,
+        speed: randomStat(),
+        stamina: randomStat(),
+        odds: 2
+    };
+
+    const newIndex = getHorseCards().length;
+    const emptyState = horsesList.querySelector(".empty-state");
+    if (emptyState) emptyState.remove();
+
+    horsesList.appendChild(createHorseCard(horse, newIndex));
+    const lanes = ensureTrackLayout();
+    if (lanes) lanes.appendChild(createRaceLane(horse, newIndex));
+
+    updateHorseCount();
+    syncUI();
+}
+
+function removeLastHorse() {
+    if (gameLocked || betPlaced) return;
+
+    const cards = getHorseCards();
+    if (!cards.length) return;
+
+    const lastCard = cards[cards.length - 1];
+    const removedId = lastCard.dataset.id;
+    lastCard.remove();
+
+    const lanes = getElement("race-track-lanes");
+    if (lanes && lanes.lastElementChild) {
+        lanes.lastElementChild.remove();
+    }
+
+    if (selectedHorseId && String(selectedHorseId) === String(removedId)) {
+        selectedHorseId = null;
+        selectedHorseName = null;
+        selectedHorseOdds = null;
+        currentBet = 0;
+    }
+
+    if (!getHorseCards().length) {
+        const horsesList = getElement("horses-list");
+        if (horsesList) {
+            const empty = document.createElement("p");
+            empty.className = "empty-state";
+            empty.textContent = "No horses yet. Choose a mode and create some to begin.";
+            horsesList.appendChild(empty);
+        }
+
+        const track = document.querySelector(".race-track");
+        if (track) {
+            track.innerHTML = `<p class="empty-state">No horses available. Add some to start a race.</p>`;
+        }
+    }
+
+    updateHorseCount();
+    clearHorseHighlights();
+    setMessage("Select a horse from the list to begin.", "is-info");
+    syncUI();
+}
+
 function adjustBet(delta) {
     if (gameLocked || capital <= 0 || betPlaced) return;
     const next = Math.max(0, Math.min(capital, currentBet + delta));
@@ -185,39 +335,18 @@ function allIn() {
 }
 
 function placeBet() {
-    console.log("💰 placeBet вызван");
+    if (gameLocked || betPlaced) return;
+    if (capital <= 0) return syncUI();
+    if (!selectedHorseId) return setMessage("Pick a horse first.", "is-info");
+    if (currentBet <= 0) return setMessage("Bet must be greater than $0.", "is-info");
+    if (currentBet > capital) currentBet = capital;
 
-    if (gameLocked || betPlaced) {
-        console.warn("⛔ Ставка уже сделана или игра заблокирована");
-        return;
-    }
-    if (capital <= 0) {
-        syncUI();
-        return;
-    }
-    if (!selectedHorseId) {
-        setMessage("Pick a horse first.", "is-info");
-        syncUI();
-        return;
-    }
-    if (currentBet <= 0) {
-        setMessage("Bet must be greater than $0.", "is-info");
-        syncUI();
-        return;
-    }
-    if (currentBet > capital) {
-        currentBet = capital;
-    }
-
-    // Capture odds at bet time so the outcome is based on the horse the user chose.
     selectedHorseOdds = getHorseOddsById(selectedHorseId);
-
     reservedBet = currentBet;
     betPlaced = true;
     capital -= reservedBet;
 
     clearHorseHighlights();
-
     document.querySelectorAll(".js-horse-select").forEach(cb => {
         cb.disabled = true;
     });
@@ -227,33 +356,19 @@ function placeBet() {
 }
 
 function startRace() {
-    console.log("🏁 startRace вызван");
-
-    if (gameLocked) {
-        console.warn("⛔ Игра уже идёт");
-        return;
-    }
+    if (gameLocked) return;
     if (!betPlaced) {
         setMessage("Place your bet first!", "is-info");
-        syncUI();
-        return;
+        return syncUI();
     }
 
     gameLocked = true;
     syncUI();
 
-    if (raceInterval !== null) {
-        console.warn("⚠️ Гонка уже идёт");
-        return;
-    }
+    if (raceInterval !== null) return;
 
     const horses = document.querySelectorAll(".race-lane .horse");
-    if (horses.length === 0) {
-        console.error("❌ Нет лошадей на треке");
-        return;
-    }
-
-    console.log("🏁 startRace запущен, лошадей:", horses.length);
+    if (!horses.length) return;
 
     const firstLane = horses[0].parentElement;
     if (firstLane) {
@@ -271,21 +386,11 @@ function startRace() {
     raceTick = 0;
     winnerHorseId = null;
     winnerFinishAt = Infinity;
-
     raceInterval = setInterval(updateRace, 100);
 }
 
 function finishRound(winnerId) {
     const winnerName = getHorseNameById(winnerId);
-
-    console.log("=== Round settled ===", {
-        winnerId,
-        winnerName,
-        selectedHorseId,
-        selectedHorseOdds,
-        betPlaced,
-        reservedBet
-    });
 
     document.querySelectorAll(".race-lane .horse").forEach(h => {
         h.classList.toggle("is-winner", String(h.dataset.id) === String(winnerId));
@@ -300,24 +405,12 @@ function finishRound(winnerId) {
     const won = betIsActive && selectedHorseId && String(selectedHorseId) === String(winnerId);
 
     if (won) {
-        // If odds are 0/null/invalid, we still treat it as a win.
-        // Fallback multiplier matches the previous behavior (win doubled stake).
         const multiplier = (typeof selectedHorseOdds === "number" && Number.isFinite(selectedHorseOdds) && selectedHorseOdds > 0)
             ? selectedHorseOdds
             : 2;
-
-        const winnings = reservedBet * multiplier; // Includes returning the stake at minimum.
-        const profit = winnings - reservedBet; // Net change to the user's capital.
+        const winnings = reservedBet * multiplier;
+        const profit = winnings - reservedBet;
         capital += winnings;
-
-        console.log("=== Bet settled ===", {
-            won: true,
-            multiplier,
-            winnings,
-            profit,
-            capitalAfter: capital
-        });
-
         const profitText = profit >= 0 ? `+$${profit}` : `-$${Math.abs(profit)}`;
         setMessage(`You WIN! Winner: ${winnerName}. ${profitText}`, "is-win");
     } else if (betIsActive) {
@@ -362,85 +455,9 @@ function restartGame() {
     syncUI();
 }
 
-function initBettingUI() {
-    console.log("🔧 initBettingUI запущен");
-
-    // ✅ Получаем все кнопки с проверками
-    const minusBtn = getElement("bet-minus");
-    const plusBtn = getElement("bet-plus");
-    const allInBtn = getElement("bet-allin");
-    const placeBtn = getElement("place-bet");
-    const restartBtn = getElement("restart-game");
-    const startRaceBtn = getElement("start-race-btn");
-
-    // ✅ Логируем что найдено
-    console.log("🔘 Кнопки:", {
-        minusBtn: minusBtn ? "OK" : "NOT FOUND",
-        plusBtn: plusBtn ? "OK" : "NOT FOUND",
-        allInBtn: allInBtn ? "OK" : "NOT FOUND",
-        placeBtn: placeBtn ? "OK" : "NOT FOUND",
-        restartBtn: restartBtn ? "OK" : "NOT FOUND",
-        startRaceBtn: startRaceBtn ? "OK" : "NOT FOUND"
-    });
-
-    // ✅ Добавляем обработчики только если элементы существуют
-    if (minusBtn) {
-        minusBtn.addEventListener("click", () => adjustBet(-10));
-    }
-    if (plusBtn) {
-        plusBtn.addEventListener("click", () => adjustBet(10));
-    }
-    if (allInBtn) {
-        allInBtn.addEventListener("click", () => allIn());
-    }
-    if (placeBtn) {
-        placeBtn.addEventListener("click", () => placeBet());
-    }
-    if (startRaceBtn) {
-        startRaceBtn.addEventListener("click", () => startRace());
-    }
-    if (restartBtn) {
-        restartBtn.addEventListener("click", () => restartGame());
-    }
-
-    // ✅ Обработка чекбоксов
-    const checkboxes = document.querySelectorAll(".js-horse-select");
-    console.log("☑️ Найдено чекбоксов:", checkboxes.length);
-
-    checkboxes.forEach(cb => {
-        console.log(`  - Checkbox ID: ${cb.dataset.id}, Name: ${cb.dataset.name}`);
-
-        cb.addEventListener("change", (e) => {
-            console.log("📝 Checkbox change:", {
-                id: e.target.dataset.id,
-                name: e.target.dataset.name,
-                checked: e.target.checked
-            });
-
-            if (e.target.checked) {
-                selectHorse(e.target.dataset.id);
-            } else {
-                if (selectedHorseId === String(e.target.dataset.id)) {
-                    selectedHorseId = null;
-                    selectedHorseName = null;
-                    syncUI();
-                    setMessage("Select a horse from the list to begin.", "is-info");
-                }
-            }
-        });
-    });
-
-    setMessage("Select a horse from the list to begin.", "is-info");
-    syncUI();
-}
-
-const STAMINA_DRAIN_PER_TICK = 0.22;
-const STAMINA_BOOST_AT_MAX = 1.0;
-
 function updateRace() {
     const horses = Array.from(document.querySelectorAll(".race-lane .horse"));
     let finishedCount = 0;
-
     raceTick++;
 
     horses.forEach(horse => {
@@ -449,27 +466,25 @@ function updateRace() {
             return;
         }
 
-        const baseSpeed = parseInt(horse.dataset.speed) || 5;
-        const staminaMax = parseInt(horse.dataset.stamina) || 5;
+        const baseSpeed = parseInt(horse.dataset.speed, 10) || 5;
+        const staminaMax = parseInt(horse.dataset.stamina, 10) || 5;
         let currentStamina = parseFloat(horse.dataset.currentStamina);
-        if (isNaN(currentStamina)) currentStamina = staminaMax;
+        if (Number.isNaN(currentStamina)) currentStamina = staminaMax;
 
         const drain = STAMINA_DRAIN_PER_TICK * (0.85 + 0.3 * (baseSpeed / 10));
         currentStamina = Math.max(0, currentStamina - drain);
-        horse.dataset.currentStamina = currentStamina;
+        horse.dataset.currentStamina = String(currentStamina);
 
         const staminaRatio = staminaMax > 0 ? currentStamina / staminaMax : 0;
         const staminaBoost = (Math.min(Math.max(staminaMax, 0), 10) / 10) * STAMINA_BOOST_AT_MAX;
         const speedMultiplier = 1 + (staminaBoost * staminaRatio);
-
         const move = (baseSpeed * speedMultiplier) * (0.85 + 0.3 * Math.random());
         const actualMove = Math.max(0.35, move);
 
-        let currentLeft = parseFloat(horse.style.left || START_OFFSET);
+        const currentLeft = parseFloat(horse.style.left || START_OFFSET);
         let newLeft = currentLeft + actualMove;
 
         if (newLeft >= FINISH_LINE) {
-            // Estimate a finish time within the current tick so ties don't default to DOM order.
             const remaining = Math.max(0, FINISH_LINE - currentLeft);
             const fraction = actualMove > 0 ? Math.min(1, remaining / actualMove) : 1;
             const finishAt = raceTick + fraction;
@@ -485,11 +500,8 @@ function updateRace() {
             }
         }
 
-        horse.style.left = newLeft + "px";
+        horse.style.left = `${newLeft}px`;
     });
-
-    updateLog(horses);
-    updateTopPanel(horses);
 
     if (finishedCount === horses.length) {
         clearInterval(raceInterval);
@@ -500,8 +512,8 @@ function updateRace() {
                 .filter(h => h.dataset.finishAt)
                 .map(h => ({ id: h.dataset.id, finishAt: parseFloat(h.dataset.finishAt) }))
                 .filter(x => Number.isFinite(x.finishAt));
-            if (finishers.length === 0) return null;
-            finishers.sort((a, b) => a.finishAt - b.finishAt); // earliest first
+            if (!finishers.length) return null;
+            finishers.sort((a, b) => a.finishAt - b.finishAt);
             return finishers[0]?.id || null;
         })();
 
@@ -509,73 +521,38 @@ function updateRace() {
     }
 }
 
-function updateLog(horses) {
-    const log = document.getElementById("log");
-    if (!log) return;
+function initHandlers() {
+    const horsesList = getElement("horses-list");
+    if (horsesList) {
+        horsesList.addEventListener("change", (event) => {
+            const target = event.target;
+            if (!(target instanceof HTMLInputElement)) return;
+            if (!target.classList.contains("js-horse-select")) return;
+            if (target.checked) {
+                selectHorse(target.dataset.id);
+            } else if (selectedHorseId === String(target.dataset.id)) {
+                selectedHorseId = null;
+                selectedHorseName = null;
+                selectedHorseOdds = null;
+                setMessage("Select a horse from the list to begin.", "is-info");
+                syncUI();
+            }
+        });
+    }
 
-    const sorted = [...horses].sort((a, b) => {
-        const leftA = parseFloat(a.style.left || "0");
-        const leftB = parseFloat(b.style.left || "0");
-        if (leftA !== leftB) return leftA - leftB; // furthest back first
-
-        // Tie-break by finish time so winner is not forced to DOM order.
-        const finishA = parseFloat(a.dataset.finishAt || "Infinity");
-        const finishB = parseFloat(b.dataset.finishAt || "Infinity");
-        if (finishA !== finishB) return finishA - finishB; // earlier finish should rank higher
-
-        return String(a.dataset.id).localeCompare(String(b.dataset.id));
-    });
-
-    log.innerHTML = "";
-
-    sorted.forEach((horse, index) => {
-        const li = document.createElement("li");
-        const place = sorted.length - index;
-        li.textContent = `${place} место — ${horse.dataset.name}`;
-        log.appendChild(li);
-    });
-}
-
-function updateTopPanel(horses) {
-    const topTrack = document.getElementById("top-track");
-    if (!topTrack) return;
-
-    topTrack.innerHTML = "";
-
-    const sorted = [...horses].sort((a, b) => {
-        const leftA = parseFloat(a.style.left || "0");
-        const leftB = parseFloat(b.style.left || "0");
-        const leftDiff = leftB - leftA;
-        if (leftDiff !== 0) return leftDiff; // furthest forward first
-
-        // Tie-break by finish time so winner is consistent.
-        const finishA = parseFloat(a.dataset.finishAt || "Infinity");
-        const finishB = parseFloat(b.dataset.finishAt || "Infinity");
-        const finishDiff = finishA - finishB; // earlier first
-        if (finishDiff !== 0) return finishDiff;
-
-        return String(a.dataset.id).localeCompare(String(b.dataset.id));
-    });
-
-    sorted.forEach((horse) => {
-        const marker = document.createElement("div");
-        marker.className = "top-horse";
-        marker.textContent = horse.dataset.name;
-
-        const rawLeft = parseFloat(horse.style.left || START_OFFSET);
-        const clamped = Math.min(Math.max(rawLeft, START_OFFSET), FINISH_LINE);
-        const progress = (clamped - START_OFFSET) / (FINISH_LINE - START_OFFSET);
-        marker.style.left = (progress * 100) + "%";
-
-        topTrack.appendChild(marker);
-    });
+    getElement("horse-add")?.addEventListener("click", addHorse);
+    getElement("horse-remove")?.addEventListener("click", removeLastHorse);
+    getElement("bet-minus")?.addEventListener("click", () => adjustBet(-10));
+    getElement("bet-plus")?.addEventListener("click", () => adjustBet(10));
+    getElement("bet-allin")?.addEventListener("click", allIn);
+    getElement("place-bet")?.addEventListener("click", placeBet);
+    getElement("start-race-btn")?.addEventListener("click", startRace);
+    getElement("restart-game")?.addEventListener("click", restartGame);
 }
 
 document.addEventListener("DOMContentLoaded", () => {
-    console.log("📦 DOMContentLoaded, инициализация...");
-    console.log("🐎 Лошадей на треке:", document.querySelectorAll(".race-lane .horse").length);
-    console.log("🃏 Карточек лошадей:", document.querySelectorAll(".horse-card.js-horse-pick").length);
-    console.log("☑️ Чекбоксов:", document.querySelectorAll(".js-horse-select").length);
-
-    initBettingUI();
+    updateHorseCount();
+    initHandlers();
+    setMessage("Select a horse from the list to begin.", "is-info");
+    syncUI();
 });
