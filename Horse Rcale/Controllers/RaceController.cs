@@ -1,8 +1,7 @@
-
 using Horse_Rcale.Models;
 using Microsoft.AspNetCore.Mvc;
 
-namespace Horse_Rcale.Controllers
+namespace CGHR.Controllers
 {
     public class RaceController : Controller
     {
@@ -59,7 +58,7 @@ namespace Horse_Rcale.Controllers
             });
 
             return RedirectToAction("Index");
-        }   
+        }
 
         [HttpPost]
         public IActionResult ResetCustom()
@@ -77,7 +76,7 @@ namespace Horse_Rcale.Controllers
             var list = new List<Horse>();
 
             var shuffledNames = HorseNames.Names
-                .OrderBy(_ => rnd.Next())
+                .OrderBy(x => rnd.Next())
                 .ToList();
 
             for (int i = 0; i < 4; i++)

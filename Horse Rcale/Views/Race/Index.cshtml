@@ -1,24 +1,53 @@
-﻿@model List<Horse_Rcale.Models.Horse>
+@model List<Horse_Rcale.Models.Horse>
 
-<link rel="stylesheet" href="~/css/race.css" />
+<link rel="stylesheet" href="~/css/race.css" asp-append-version="true" />
 
 <div class="race-page">
     <div class="race-header-row">
+        <div class="stable-pill">
+            <span class="stable-icon">👤</span>
+            <span class="stable-name">Champion Stable</span>
+        </div>
         <div class="race-page-title">Horse Racing Simulator</div>
+        <div class="race-header-actions">
+            <div class="mode-panel">
+                <a href="/Race/SetRandomMode" class="mode-link">Random Stable</a>
+                <a href="/Race/SetCustomMode" class="mode-link">Custom Stable</a>
+            </div>
+        </div>
     </div>
+
+    <section class="race-progress">
+        <div class="race-progress-header">
+            <div class="race-progress-title">Race Progress</div>
+            <div class="race-progress-percent-labels">
+                <span>25%</span>
+                <span>50%</span>
+                <span>75%</span>
+            </div>
+        </div>
+        <div class="race-progress-track">
+            <div class="race-progress-rail">
+                <div class="race-progress-ticks">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <div id="top-track" class="race-progress-horses"></div>
+            </div>
+            <div class="race-progress-finish">FINISH</div>
+        </div>
+    </section>
 
     <section class="race-main">
         <aside class="panel horses-panel">
             <div class="panel-header">
-                <div class="horses-header-left">
-                    <h2>Horses <span id="horses-count">@((Model?.Count ?? 0))</span></h2>
-                    <button id="horse-add" class="horse-add">+</button>
-                    <button id="horse-remove" class="horse-remove">-</button>
-                </div>
+                <h2>Horses (@Model.Count)</h2>
+                <span class="panel-subtitle">Select one horse to bet on</span>
             </div>
 
-            <div class="horses-list" id="horses-list">
-                @if (Model == null || !Model.Any())
+            <div class="horses-list">
+                @if (!Model.Any())
                 {
                     <p class="empty-state">No horses yet. Choose a mode and create some to begin.</p>
                 }
@@ -28,28 +57,32 @@
                     {
                         var horse = Model[i];
                         var color = GetHorseColor(i);
-
-                        <div class="horse-card">
+                        <div class="horse-card js-horse-pick" data-id="@horse.Id" data-name="@horse.Name" data-odds="@horse.Position">
                             <div class="horse-card-header">
+                                <label class="horse-select-checkbox">
+                                    <input type="checkbox"
+                                           class="js-horse-select"
+                                           data-id="@horse.Id"
+                                           data-name="@horse.Name" />
+                                    <span class="checkmark"></span>
+                                </label>
                                 <span class="horse-color-swatch" style="background-color:@color;"></span>
                                 <div class="horse-card-title">
                                     <div class="horse-name">@horse.Name</div>
-                                    <div class="horse-meta">Horse @(i + 1)</div>
+                                    <div class="horse-meta">Speed: @horse.Speed | Stamina: @horse.Stamina</div>
                                 </div>
                             </div>
-
                             <div class="horse-stats">
                                 <div class="horse-stat">
                                     <span class="horse-stat-label">Speed</span>
                                     <div class="horse-stat-bar">
-                                        <div class="horse-stat-bar-fill speed" style="width:@GetPercent(horse.Speed)%"></div>
+                                        <div class="horse-stat-bar-fill speed" style="width:@(GetPercent(horse.Speed))%;"></div>
                                     </div>
                                 </div>
-
                                 <div class="horse-stat">
                                     <span class="horse-stat-label">Stamina</span>
                                     <div class="horse-stat-bar">
-                                        <div class="horse-stat-bar-fill stamina" style="width:@GetPercent(horse.Stamina)%"></div>
+                                        <div class="horse-stat-bar-fill stamina" style="width:@(GetPercent(horse.Stamina))%;"></div>
                                     </div>
                                 </div>
                             </div>
@@ -59,6 +92,8 @@
             </div>
 
             <div class="horses-actions">
+                <a href="/Race/SetRandomMode" class="btn-secondary">Generate Random Horses</a>
+                <a href="/Race/Create" class="btn-secondary">Create Custom Horse</a>
                 <form method="post" action="/Race/ResetCustom">
                     <button type="submit" class="btn-ghost">Reset Race</button>
                 </form>
@@ -66,220 +101,96 @@
         </aside>
 
         <section class="panel track-panel">
-            <div class="full-racetrack">
-                <div class="panel-header">
-                    <h2>Race Track</h2>
-                    
-                </div>
+            <div class="panel-header">
+                <h2>Race Track</h2>
+                <span class="panel-subtitle">Place your bet, then start the race</span>
+            </div>
 
-                <div class="race-track">
-                    @if (Model == null || !Model.Any())
-                    {
-                        <p class="empty-state">No horses available. Add some to start a race.</p>
-                    }
-                    else
-                    {
-                        <div class="race-track-layout">
-                          
-
-                            <div class="race-track-lanes">
-                                @for (int i = 0; i < Model.Count; i++)
-                                {
-                                    var horse = Model[i];
-                                    var color = GetHorseColor(i);
-
-                                    <div class="race-lane">
-                                        <div class="race-lane-line"></div>
-
-                                        <div class="horse"
-                                             data-id="@horse.Id"
-                                             data-name="@horse.Name"
-                                             data-speed="@horse.Speed"
-                                             data-stamina="@horse.Stamina"
-                                             style="--horse-color:@color;">
-                                            <span class="horse-dot"></span>
-                                            <span class="horse-label">@horse.Name</span>
-                                        </div>
-                                    </div>
-                                }
+            <div class="race-track">
+                @if (!Model.Any())
+                {
+                    <p class="empty-state">No horses available. Add some to start a race.</p>
+                }
+                else
+                {
+                    <div class="betting-panel" aria-live="polite">
+                        <div class="betting-row">
+                            <div class="betting-stat">
+                                <div class="betting-stat-label">Capital</div>
+                                <div class="betting-stat-value">$<span id="capital">100</span></div>
+                            </div>
+                            <div class="betting-stat">
+                                <div class="betting-stat-label">Current Bet</div>
+                                <div class="betting-stat-value">$<span id="bet">0</span></div>
+                            </div>
+                            <div class="betting-stat">
+                                <div class="betting-stat-label">Selected Horse</div>
+                                <div class="betting-stat-value"><span id="selected-horse">None</span></div>
                             </div>
                         </div>
-                    }
-                </div>
 
-                <div class="race-main-action">
-                    <button type="button" class="btn-primary" onclick="startRace()">Start Race</button>
-                </div>
+                        <div class="betting-controls">
+                            <button type="button" class="btn-ghost btn-mini" id="bet-minus" disabled>-10</button>
+                            <button type="button" class="btn-ghost btn-mini" id="bet-plus">+10</button>
+                            <button type="button" class="btn-secondary btn-mini" id="bet-allin">All in</button>
+                            <button type="button" class="btn-primary btn-mini" id="place-bet" disabled>Place Bet</button>
+                            <button type="button" class="btn-ghost btn-mini" id="restart-game" hidden>Restart Game</button>
+                        </div>
+
+                        <div class="betting-message" id="bet-message">Select a horse from the list to begin.</div>
+                    </div>
+
+                    <div class="race-track-layout">
+                        <div class="race-track-labels">
+                            <span class="track-label track-label-start">START</span>
+                            <span class="track-label track-label-finish">FINISH</span>
+                        </div>
+                        <div class="race-track-lanes">
+                            @for (int i = 0; i < Model.Count; i++)
+                            {
+                                var horse = Model[i];
+                                var color = GetHorseColor(i);
+                                <div class="race-lane">
+                                    <div class="race-lane-line"></div>
+                                    <div class="horse"
+                                         data-id="@horse.Id"
+                                         data-name="@horse.Name"
+                                         data-speed="@horse.Speed"
+                                         data-stamina="@horse.Stamina"
+                                         data-odds="@horse.Position"
+                                         style="--horse-color:@color;">
+                                        <span class="horse-dot"></span>
+                                        <span class="horse-label">@horse.Name</span>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
             </div>
         </section>
+
+        <aside class="panel log-panel">
+            <div class="panel-header">
+                <h2>Event Log</h2>
+            </div>
+            <ul id="log" class="event-log">
+                <li class="event-log-empty">No events yet</li>
+            </ul>
+        </aside>
     </section>
+
+    <div class="race-main-action">
+        <button type="button" class="btn-primary" id="start-race-btn" disabled>🏁 Start Race</button>
+    </div>
 </div>
 
-<script src="~/js/race.js"></script>
-<script>
-    const horsesList = document.getElementById('horses-list');
-    const horsesCount = document.getElementById('horses-count');
-    const horseAddBtn = document.getElementById('horse-add');
-    const horseRemoveBtn = document.getElementById('horse-remove');
+<script src="~/js/race.js" asp-append-version="true"></script>
 
-    let horseIndex = horsesList.children.length; // текущий индекс
-
-    // Функция для генерации цвета (как в Razor)
-    function getHorseColor(index) {
-        const colors = ["#0f766e", "#f97316", "#3b82f6", "#e11d48", "#6366f1", "#22c55e"];
-        return colors[index % colors.length];
-    }
-
-    // Функция для случайных speed/stamina
-    function randomStat() {
-        return Math.floor(Math.random() * 10) + 1; // 1-10
-    }
-
-    // Добавление лошади
-    horseAddBtn.addEventListener('click', () => {
-        if (window.__raceRunning) return;
-
-        horseIndex = horsesList.querySelectorAll('.horse-card').length;
-        horseIndex++;
-
-        const color = getHorseColor(horseIndex - 1);
-        const speed = randomStat();
-        const stamina = randomStat();
-
-        const defaultName = `Horse ${horseIndex}`;
-        const value = prompt("Horse name:", defaultName);
-        const horseName = (value ?? "").trim().length ? (value ?? "").trim() : defaultName;
-
-        // If list starts with an empty-state, remove it when adding the first horse.
-        const horsesEmpty = horsesList.querySelector('.empty-state');
-        if (horsesEmpty) horsesEmpty.remove();
-
-        const horseCard = document.createElement('div');
-        horseCard.classList.add('horse-card');
-        horseCard.dataset.id = horseIndex;
-
-        horseCard.innerHTML = `
-            <div class="horse-card-header">
-                <span class="horse-color-swatch" style="background-color:${color};"></span>
-                <div class="horse-card-title">
-                    <div class="horse-name">${horseName}</div>
-                    <div class="horse-meta">Horse ${horseIndex}</div>
-                </div>
-            </div>
-            <div class="horse-stats">
-                <div class="horse-stat">
-                    <span class="horse-stat-label">Speed</span>
-                    <div class="horse-stat-bar">
-                        <div class="horse-stat-bar-fill speed" style="width:${speed*10}%"></div>
-                    </div>
-                </div>
-                <div class="horse-stat">
-                    <span class="horse-stat-label">Stamina</span>
-                    <div class="horse-stat-bar">
-                        <div class="horse-stat-bar-fill stamina" style="width:${stamina*10}%"></div>
-                    </div>
-                </div>
-            </div>
-        `;
-
-        horsesList.appendChild(horseCard);
-
-        // Ensure track lanes exist (if the track was initially empty).
-        const raceTrack = document.querySelector('.race-track');
-        let lanes = document.querySelector('.race-track-lanes');
-        if (!lanes && raceTrack) {
-            const existingLayout = raceTrack.querySelector('.race-track-layout');
-            if (existingLayout) {
-                lanes = existingLayout.querySelector('.race-track-lanes');
-            }
-
-            if (!lanes) {
-                const emptyState = raceTrack.querySelector('.empty-state');
-                if (emptyState) emptyState.remove();
-
-                const layout = document.createElement('div');
-                layout.className = 'race-track-layout';
-
-                lanes = document.createElement('div');
-                lanes.className = 'race-track-lanes';
-
-                layout.appendChild(lanes);
-                raceTrack.appendChild(layout);
-            }
-        }
-
-        // Add matching horse to the racetrack.
-        if (lanes) {
-            const lane = document.createElement('div');
-            lane.className = 'race-lane';
-
-            const line = document.createElement('div');
-            line.className = 'race-lane-line';
-
-            const horse = document.createElement('div');
-            horse.className = 'horse';
-            horse.dataset.id = horseIndex;
-            horse.dataset.name = horseName;
-            horse.dataset.speed = speed;
-            horse.dataset.stamina = stamina;
-            horse.style.setProperty('--horse-color', color);
-
-            horse.innerHTML = `
-                <span class="horse-dot"></span>
-                <span class="horse-label">${horseName}</span>
-            `;
-
-            lane.appendChild(line);
-            lane.appendChild(horse);
-            lanes.appendChild(lane);
-        }
-
-        if (horsesCount) horsesCount.textContent = horseIndex;
-    });
-
-    // Удаление последней лошади
-    horseRemoveBtn.addEventListener('click', () => {
-        if (window.__raceRunning) return;
-
-        const horseCards = horsesList.querySelectorAll('.horse-card');
-        if (horseCards.length === 0) return;
-
-        // Remove last horse card (sidebar).
-        horseCards[horseCards.length - 1].remove();
-
-        // Remove matching horse lane (track).
-        const raceLanes = document.querySelectorAll('.race-track-lanes .race-lane');
-        if (raceLanes.length) {
-            raceLanes[raceLanes.length - 1].remove();
-        }
-
-        horseIndex = horsesList.querySelectorAll('.horse-card').length;
-        if (horsesCount) horsesCount.textContent = horseIndex;
-
-        // If nothing is left, show empty-states again.
-        if (horseIndex === 0) {
-            const horsesEmpty = document.createElement('p');
-            horsesEmpty.className = 'empty-state';
-            horsesEmpty.textContent = 'No horses yet. Choose a mode and create some to begin.';
-            horsesList.appendChild(horsesEmpty);
-
-            const raceTrack = document.querySelector('.race-track');
-            const layout = raceTrack ? raceTrack.querySelector('.race-track-layout') : null;
-            if (layout) layout.remove();
-
-            if (raceTrack) {
-                const trackEmpty = document.createElement('p');
-                trackEmpty.className = 'empty-state';
-                trackEmpty.textContent = 'No horses available. Add some to start a race.';
-                raceTrack.appendChild(trackEmpty);
-            }
-        }
-    });
-</script>
 @functions {
     private static string GetHorseColor(int index)
     {
-        string[] colors = { "#0f766e", "#f97316", "#3b82f6", "#e11d48", "#6366f1", "#22c55e" };
+        string[] colors = new[] { "#0f766e", "#f97316", "#3b82f6", "#e11d48", "#6366f1", "#22c55e" };
         return colors[index % colors.Length];
     }
 
